@@ -1,136 +1,107 @@
-# CUDA Parallel Reduction using CUDA
+# Parallel Reduction in CUDA – Local GPU Implementation
 
-## 1. Project Overview
+## 1. Overview
 
-This project implements **Parallel Reduction using CUDA** to calculate the sum of a large array of floating-point numbers using GPU parallel processing.
+This project demonstrates Parallel Reduction using CUDA to calculate the sum of a large array of floating-point numbers using an NVIDIA GPU.
 
-The project compares a Naive Reduction approach with an Optimised Reduction approach and analyses the performance of different CUDA block sizes.
+The main aim is to understand how parallel processing improves computation speed by distributing work among multiple GPU threads.
 
 ## 2. Objectives
 
-- Understand the concept of Parallel Reduction.
-- Implement Naive Reduction using CUDA.
-- Implement Optimised Reduction using CUDA.
-- Compare CPU and GPU execution times.
-- Analyse the effect of different block sizes on GPU performance.
-- Verify the correctness of GPU results with CPU results.
+- Implement a CPU-based sum for reference.
+- Implement a Naive CUDA Reduction.
+- Implement an Optimised CUDA Reduction.
+- Understand shared memory and thread synchronisation.
+- Compare different reduction approaches.
+- Verify the correctness of the calculated sum.
 
 ## 3. Technologies Used
 
-- CUDA C/C++
-- NVIDIA CUDA Toolkit 13.0
-- Google Colab
-- NVIDIA Tesla T4 GPU
+- CUDA C++
+- NVIDIA CUDA Toolkit
+- NVIDIA GPU
+- `nvcc` CUDA compiler
+- Windows Batch / Linux Shell scripts
 
-## 4. Input Details
+## 4. Project Structure
 
-| Parameter | Value |
-|---|---|
-| Input size | 16,777,216 elements |
-| Input values | All values are 1.0 |
-| Expected sum | 16,777,216 |
-| Input array size | 64 MiB |
-| GPU | NVIDIA Tesla T4 |
+```text
+Local-GPU-Implementation/
+│
+├── src/
+│   └── parallel_reduction.cu
+│
+├── scripts/
+│   ├── build_linux.sh
+│   └── build_windows.bat
+│
+└── results/
+    └── results_template.csv
+```
 
-## 5. Implementations
+## 5. Implementation
 
-### A. Naive Parallel Reduction
+### A. CPU Reduction
+The CPU calculates the sum of all array elements sequentially using a loop. This result is used as a reference for checking GPU results.
 
+### B. Naive GPU Reduction
+- Uses shared memory to store values.
 - Uses interleaved addressing.
-- Uses shared memory to store intermediate sums.
-- Performs reduction in multiple stages.
-- Uses thread synchronization.
+- Uses the condition `tid % (2*s) == 0`.
+- Uses `__syncthreads()` to synchronise threads.
 
-### B. Optimised Parallel Reduction
+### C. Optimised GPU Reduction
+- Uses sequential addressing.
+- Adds two elements during the loading stage.
+- Uses warp shuffle with `__shfl_down_sync()`.
+- Reduces unnecessary synchronisation and improves thread utilisation.
 
-The optimised implementation uses:
+## 6. Building and Running
 
-- First addition during data loading.
-- Sequential addressing.
-- Warp shuffle using `__shfl_down_sync()`.
-- Shared memory and synchronization for reduction stages.
+### Windows
 
-These optimisations reduce unnecessary operations and improve GPU execution performance.
+Open the x64 Native Tools Command Prompt for Visual Studio.
 
-### C. Block Size Comparison
+Navigate to the project folder and execute:
 
-The optimised reduction was tested using three different block sizes:
+```bat
+scripts\build_windows.bat
+```
 
-- 128 threads
-- 256 threads
-- 512 threads
+To build and run:
 
-## 6. Performance Comparison
+```bat
+scripts\build_windows.bat run
+```
 
-| Implementation | CPU Time (ms) | GPU Time (ms) | Speedup |
-|---|---:|---:|---:|
-| Naive Reduction (corrected) | 52.1049 | 1.5740 | 33.10x |
-| Optimised Reduction | 54.3459 | 0.4811 | 112.97x |
+### Linux
 
-**Result Verification:** All implementations produced the expected sum of **16,777,216**.
+Build the project:
 
-## 7. Estimated Memory Bandwidth
+```bash
+bash scripts/build_linux.sh
+```
 
-| Implementation | Estimated Bandwidth |
-|---|---:|
-| Naive Reduction | 42.63 GB/s |
-| Optimised Reduction | 139.50 GB/s |
+Build and run:
 
-*Note: Bandwidth is estimated using the 64 MiB input size divided by GPU execution time. It is not the total memory traffic because intermediate partial sums also involve memory operations.*
+```bash
+bash scripts/build_linux.sh --run
+```
 
-## 8. Block Size Performance Analysis
+**Requirement:** An NVIDIA GPU with a compatible NVIDIA driver and CUDA Toolkit is required.
 
-| Threads per Block | GPU Time (ms) | GPU Sum |
-|---:|---:|---:|
-| 128 | 0.3203 | 16,777,216 |
-| 256 | 0.3596 | 16,777,216 |
-| 512 | 0.4350 | 16,777,216 |
+## 7. Result Verification
 
-**Observation:** 128 threads per block achieved the lowest execution time of 0.3203 ms among the three tested configurations.
+The program compares the GPU reduction result with the CPU reference result.
 
-## 9. Execution Results and Screenshots
+It also performs correctness checks for different input sizes and provides a benchmark results CSV when executed successfully.
 
-### Naive Reduction – Initial Execution
+Actual GPU execution times, speedup and block-size results should be added after running the experiment on the target NVIDIA GPU.
 
-![Initial Naive Reduction](naive_initial_run.png)
+## 8. Conclusion
 
-### Naive Reduction – Corrected Full-GPU Execution
+This implementation demonstrates how CUDA parallel reduction can be used to perform large-scale summation on an NVIDIA GPU. It compares naive and optimised approaches and explains how memory access, thread organisation and warp-level operations affect performance.
 
-![Corrected Naive Reduction](naive_corrected_results.png)
+## 9. Source Acknowledgement
 
-### Optimised Reduction
-
-![Optimised Reduction](optimized_results.png)
-
-### Block Size Comparison
-
-![Block Size Results](block_size_results.png)
-
-### Block Size Performance Graph
-
-![Block Size Performance Graph](block_size_graph.png)
-
-## 10. Applications
-
-Parallel Reduction is useful in:
-
-- Calculating loss values in Deep Learning.
-- Computing vector norms.
-- Calculating averages and sums.
-- Statistical calculations.
-- Processing large datasets on GPUs.
-
-## 11. Conclusion
-
-The project demonstrates Parallel Reduction using CUDA and compares Naive and Optimised GPU implementations.
-
-The optimised implementation achieved a lower execution time than the corrected naive implementation. The block size experiment showed that 128 threads per block performed best among the tested configurations.
-
-All GPU results matched the expected CPU sum, confirming the correctness of the implementation.
-
-## 12. Repository Files
-
-- `naive_corrected.cu` – Corrected Naive Reduction implementation.
-- `block_size_test.cu` – Optimised reduction and block-size comparison.
-- `PGC.ipynb` – Google Colab notebook containing the practical work and execution outputs.
-- Result screenshots – Execution outputs and performance graph.
+This implementation is based on the CUDA evaluation project shared by Bhoomi Bankapur, Sneha Shettar and Sanket Ullagaddi. Credit is retained for the original work.
