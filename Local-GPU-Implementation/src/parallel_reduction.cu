@@ -1,7 +1,6 @@
 // =============================================================================
 //  Parallel Reduction in CUDA  —  CUDA Lab Evaluation, Theme 1
-//  Team: Bhoomi Bankapur, Sneha Shettar, Sanket Ullagaddi
-//
+// 
 //  Compares three ways of summing 2^24 floats:
 //    1. CPU sequential sum (reference, double accumulator)
 //    2. Naive GPU kernel     : interleaved addressing, tid % (2*s) == 0
